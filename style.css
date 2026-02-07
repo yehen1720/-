@@ -70,17 +70,17 @@ body{
   background: rgba(255,255,255,0.04);
 }
 
+/* ここが重要：laneは相対、箱は絶対配置 */
 .lane{
   position: relative;
   height: 280px;
   padding: 18px;
 }
 
+/* 箱はJSが left/width/height を入れる */
 .box{
   position:absolute;
   top: 40px;
-  width: 180px;
-  height: 200px;
   border-radius: 22px;
   border:1px solid rgba(255,255,255,0.14);
   background: rgba(0,0,0,0.28);
@@ -89,30 +89,19 @@ body{
   transition: left 520ms ease;
   user-select:none;
 }
-
 .box .lid{
   position:absolute;
   inset: 0;
   border-radius: 22px;
   background: rgba(255,255,255,0.06);
 }
-
-.box .label{
-  position:absolute;
-  left: 12px;
-  top: 10px;
-  font-weight: 1000;
-  letter-spacing: .06em;
-  opacity: .85;
-}
-
 .box .hole{
   position:absolute;
   left: 50%;
-  bottom: 18px;
+  bottom: 12px;
   transform: translateX(-50%);
   width: 70%;
-  height: 22px;
+  height: 18px;
   border-radius: 999px;
   background: rgba(0,0,0,0.38);
   border:1px solid rgba(255,255,255,0.08);
@@ -121,7 +110,7 @@ body{
 .ball{
   position:absolute;
   left:50%;
-  bottom:40px;
+  bottom:18px;
   transform: translateX(-50%);
   width: 44px;
   height: 44px;
@@ -131,44 +120,15 @@ body{
   opacity: 1;
   transition: opacity 180ms ease;
 }
-
 .ball.hidden{ opacity: 0; }
 
-.box.disabled{
-  cursor: not-allowed;
-  opacity: .75;
-}
-
-.box.correct{
-  outline: 3px solid rgba(74,163,255,0.85);
-  outline-offset: 3px;
-}
-.box.wrong{
-  outline: 3px solid rgba(255,74,74,0.85);
-  outline-offset: 3px;
-}
+.box.disabled{ cursor:not-allowed; opacity:.75; }
+.box.correct{ outline: 3px solid rgba(74,163,255,0.85); outline-offset: 3px; }
+.box.wrong{ outline: 3px solid rgba(255,74,74,0.85); outline-offset: 3px; }
 
 .tip{ margin-top:10px; opacity:0.85; font-size:13px; }
 
-/* スマホ縦画面対応 */
-@media (max-width: 600px) {
-  .lane {
-    height: 420px;
-  }
-
-  .box {
-    width: 28vw;      /* 画面幅に合わせて縮む */
-    height: 34vw;
-    min-width: 90px;  /* 小さくなりすぎ防止 */
-    min-height: 110px;
-  }
-
-  .ball {
-    width: 8vw;
-    height: 8vw;
-    min-width: 24px;
-    min-height: 24px;
-  }
+/* スマホ縦はlaneを少し高く */
+@media (max-width: 600px){
+  .lane{ height: 360px; }
 }
-
-
