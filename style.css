@@ -61,6 +61,19 @@ body{
 .btn:hover{ background: rgba(255,255,255,0.12); }
 .btn:disabled{ opacity:0.5; cursor:not-allowed; }
 
+.btns{ display:flex; gap:10px; margin-bottom:8px; align-items:center; }
+.spacer{ flex: 1; } /* RESETを右に押しやる */
+
+.btn.danger{
+  flex: 0 0 auto;
+  padding: 0 14px;
+  background: rgba(255, 74, 74, 0.18);
+  border: 1px solid rgba(255, 74, 74, 0.45);
+}
+.btn.danger:hover{
+  background: rgba(255, 74, 74, 0.25);
+}
+
 .msg{ margin:0 0 12px; opacity:.9; font-size:13px; }
 
 .stage{
@@ -218,5 +231,6 @@ body{
 .hole { display: none !important; }
 
 .lane::after{ content: none !important; display: none !important; }
+
 
 
