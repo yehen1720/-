@@ -100,8 +100,21 @@ function applyPositions(){
     boxes[id].style.left = `${xs[slot]}px`;
   }
 
-  // ボールは「箱の中央」に置く（90固定をやめる）
-  ballEl.style.left = `${xs[ballSlot] + boxW / 2}px`;
+    // ボールは「該当スロットにいる箱」の中に見える位置へ（lane基準のtopで置く）
+  const laneRect = lane.getBoundingClientRect();
+
+  // ballSlotにいる箱IDを探す（slotOfBoxId は boxId -> slot なので逆引き）
+  const boxIdAtBall = slotOfBoxId.indexOf(ballSlot);
+  const boxRect = boxes[boxIdAtBall].getBoundingClientRect();
+
+  // ボールの表示位置：箱の中央X、箱の下から少し上
+  const ballSize = ballEl.getBoundingClientRect().width || 24; // CSS/JSで変動するので実測
+  const x = (boxRect.left - laneRect.left) + boxRect.width / 2;
+  const y = (boxRect.top - laneRect.top) + boxRect.height - (ballSize / 2) - 18;
+
+  ballEl.style.left = `${x}px`;
+  ballEl.style.top = `${y}px`;
+
 }
 
 function showBall(isVisible){
@@ -302,5 +315,6 @@ movesVal.textContent = String(movesInput.value);
 speedVal.textContent = `${speedInput.value}ms`;
 render();
 resetAll();
+
 
 
