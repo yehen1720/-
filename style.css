@@ -193,8 +193,6 @@ body{
 .box:nth-child(2)::before{ animation-delay: -0.32s; }
 .box:nth-child(3)::before{ animation-delay: -0.64s; }
 
-.box .hole { display: none; }
-
 /* 箱の色をずっと変化させる */
 @keyframes colorShift {
   0%   { background: hsl(200, 40%, 18%); }
@@ -216,4 +214,5 @@ body{
 .box:nth-child(2)::before { animation-delay: -0.32s, -1.3s; }
 .box:nth-child(3)::before { animation-delay: -0.64s, -2.6s; }
 
+.box .hole { display: none; }
 
