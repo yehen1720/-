@@ -149,3 +149,24 @@ body{
 }
 
 .tip{ margin-top:10px; opacity:0.85; font-size:13px; }
+
+/* スマホ縦画面対応 */
+@media (max-width: 600px) {
+  .lane {
+    height: 420px;
+  }
+
+  .box {
+    width: 28vw;      /* 画面幅に合わせて縮む */
+    height: 34vw;
+    min-width: 90px;  /* 小さくなりすぎ防止 */
+    min-height: 110px;
+  }
+
+  .ball {
+    width: 8vw;
+    height: 8vw;
+    min-width: 24px;
+    min-height: 24px;
+  }
+}
