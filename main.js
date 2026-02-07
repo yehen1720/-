@@ -13,126 +13,33 @@ const levelEl = document.getElementById("level");
 const winEl = document.getElementById("win");
 const loseEl = document.getElementById("lose");
 
-const W = 860; // 目安。実際はlane幅で計算する
-const SLOT_COUNT = 3;
+// フェイント設定
+const FEINT_CHANCE = 0.35;
+const FEINT_PAUSE_RATIO = 0.45;
 
 let level = 1, win = 0, lose = 0;
 
 let boxes = [];
 let ballEl = null;
 
-let ballSlot = 0;          // ボールが入っている「スロット」(0,1,2)
+let ballSlot = 0;           // ボールが入っているスロット(0..2)
 let slotOfBoxId = [0,1,2];  // boxId(0..2) が今どのスロットにいるか
 let phase = "idle";         // idle/show/hide/shuffle/guess/result
 
-const FEINT_CHANCE = 0.55;      // フェイントを入れる確率（0〜1）
-const FEINT_PAUSE_RATIO = 0.45; // 停止の長さ（speedに対する割合）
-
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-function layoutSlots(){
-  const rect = lane.getBoundingClientRect();
-
-  const PAD = 18;      // .lane の padding と同じ
-  const minGap = 10;
-  const maxBox = 180;
-  const minBox = 90;
-
-  const available = rect.width - PAD * 2; // padding分を引く
-
-  let boxW = Math.floor((available - minGap * 2) / 3);
-  boxW = Math.max(minBox, Math.min(maxBox, boxW));
-
-  let gap = Math.floor((available - boxW * 3) / 2);
-  gap = Math.max(minGap, gap);
-
-  // 位置は PAD から始める（これで画面外に行かない）
-  return [PAD, PAD + boxW + gap, PAD + 2 * (boxW + gap)];
-}
 
 function setTransition(ms){
   for (const el of boxes) el.style.transitionDuration = `${ms}ms`;
 }
 
-function render(){
-  lane.innerHTML = "";
-  boxes = [];
-
-  for (let id = 0; id < 3; id++){
-    const b = document.createElement("div");
-    b.className = "box";
-    b.dataset.id = String(id);
-b.innerHTML = `
-  <div class="lid"></div>
-  <div class="hole"></div>
-`;
-    b.addEventListener("click", () => onPick(id));
-    lane.appendChild(b);
-    boxes.push(b);
+function clearMarks(){
+  for (const b of boxes){
+    b.classList.remove("correct", "wrong");
   }
-
-  // ボール（見えるのは「ボールのスロット」の位置）
-  ballEl = document.createElement("div");
-  ballEl.className = "ball";
-  lane.appendChild(ballEl);
-
-  applyPositions();
-  showBall(true);
-  setClickable(false);
-  clearMarks();
-}
-
-function applyPositions(){
-  const xs = layoutSlots();
-
-  const PAD = 18;
-  const minGap = 10;
-
-  const step = xs[1] - xs[0];
-  let boxW = step - minGap;
-  boxW = Math.max(90, Math.min(180, boxW));
-
-  // 高さも幅に合わせて決める（スマホで消えない）
-  const boxH = Math.round(boxW * 1.15);
-
-  for (let id = 0; id < 3; id++){
-    const slot = slotOfBoxId[id];
-    boxes[id].style.width = `${boxW}px`;
-    boxes[id].style.height = `${boxH}px`;
-    boxes[id].style.left = `${xs[slot]}px`;
-  }
-
-  // ボールは「ボールが入ってる箱の中」に入れる
-  const boxIdAtBall = slotOfBoxId.indexOf(ballSlot);
-  if (boxIdAtBall >= 0) {
-    boxes[boxIdAtBall].appendChild(ballEl);
-    ballEl.style.left = "50%";
-    ballEl.style.top = "auto";
-    ballEl.style.bottom = "18px"; // 箱の底からちょい上（好みで調整）
-    ballEl.style.transform = "translateX(-50%)";
-  }
-}
-
-    // ボールは「該当スロットにいる箱」の中に見える位置へ（lane基準のtopで置く）
-  const laneRect = lane.getBoundingClientRect();
-
-  // ballSlotにいる箱IDを探す（slotOfBoxId は boxId -> slot なので逆引き）
-  const boxIdAtBall = slotOfBoxId.indexOf(ballSlot);
-  const boxRect = boxes[boxIdAtBall].getBoundingClientRect();
-
-  // ボールの表示位置：箱の中央X、箱の下から少し上
-  const ballSize = ballEl.getBoundingClientRect().width || 24; // CSS/JSで変動するので実測
-  const x = (boxRect.left - laneRect.left) + boxRect.width / 2;
-  const y = (boxRect.top - laneRect.top) + boxRect.height - (ballSize / 2) - 18;
-
-  ballEl.style.left = `${x}px`;
-  ballEl.style.top = `${y}px`;
-
 }
 
 function showBall(isVisible){
-  if (isVisible) ballEl.classList.remove("hidden");
-  else ballEl.classList.add("hidden");
+  ballEl.classList.toggle("hidden", !isVisible);
 }
 
 function setClickable(on){
@@ -141,9 +48,46 @@ function setClickable(on){
   }
 }
 
-function clearMarks(){
-  for (const b of boxes){
-    b.classList.remove("correct", "wrong");
+// 画面幅に応じて「箱幅・間隔・左位置」を安全に計算する（重なり防止の本命）
+function calcLayout(){
+  const rect = lane.getBoundingClientRect();
+  const PAD = 18;     // CSSのlane paddingと合わせる
+  const minGap = 10;
+  const maxW = 180;
+  const minW = 90;
+
+  const available = rect.width - PAD * 2;
+
+  let boxW = Math.floor((available - minGap * 2) / 3);
+  boxW = Math.max(minW, Math.min(maxW, boxW));
+
+  let gap = Math.floor((available - boxW * 3) / 2);
+  gap = Math.max(minGap, gap);
+
+  const xs = [PAD, PAD + boxW + gap, PAD + 2 * (boxW + gap)];
+  const boxH = Math.round(boxW * 1.15);
+
+  return { xs, boxW, boxH };
+}
+
+function applyPositions(){
+  const { xs, boxW, boxH } = calcLayout();
+
+  // 箱の位置＆サイズ
+  for (let id = 0; id < 3; id++){
+    const slot = slotOfBoxId[id];
+    boxes[id].style.width = `${boxW}px`;
+    boxes[id].style.height = `${boxH}px`;
+    boxes[id].style.left = `${xs[slot]}px`;
+  }
+
+  // ボールは「入ってる箱」の中に移動（ズレ根絶）
+  const boxIdAtBall = slotOfBoxId.indexOf(ballSlot);
+  if (boxIdAtBall >= 0){
+    boxes[boxIdAtBall].appendChild(ballEl);
+    ballEl.style.left = "50%";
+    ballEl.style.bottom = "18px";
+    ballEl.style.transform = "translateX(-50%)";
   }
 }
 
@@ -158,10 +102,7 @@ function randomSwapPair(){
   return [a,b];
 }
 
-// boxIdではなく「スロット同士」を入れ替える
 function swapSlots(sa, sb){
-  // いま各boxIdがどのslotにいるかを持っているので、
-  // slot->boxId を逆引きして、入れ替える
   const boxAtSlot = [0,0,0];
   for (let id=0; id<3; id++){
     boxAtSlot[slotOfBoxId[id]] = id;
@@ -169,15 +110,39 @@ function swapSlots(sa, sb){
   const boxA = boxAtSlot[sa];
   const boxB = boxAtSlot[sb];
 
-  // 入れ替え
   slotOfBoxId[boxA] = sb;
   slotOfBoxId[boxB] = sa;
 
-  // ボールは「スロット」に入っている想定なので、スロット自体が動くわけじゃない
-  // でも“箱がシャッフルされる”表現では、ボールは箱と一緒に移動して見える。
-  // つまり「ボールのスロット」は入れ替えに合わせて更新する必要がある。
+  // ボールは箱と一緒に移動して見えるべきなので、スロット入れ替えに追従
   if (ballSlot === sa) ballSlot = sb;
   else if (ballSlot === sb) ballSlot = sa;
+}
+
+function render(){
+  lane.innerHTML = "";
+  boxes = [];
+
+  for (let id = 0; id < 3; id++){
+    const b = document.createElement("div");
+    b.className = "box";
+    b.dataset.id = String(id);
+    b.innerHTML = `
+      <div class="lid"></div>
+      <div class="hole"></div>
+    `;
+    b.addEventListener("click", () => onPick(id));
+    lane.appendChild(b);
+    boxes.push(b);
+  }
+
+  ballEl = document.createElement("div");
+  ballEl.className = "ball";
+  lane.appendChild(ballEl);
+
+  setClickable(false);
+  clearMarks();
+  showBall(true);
+  applyPositions();
 }
 
 async function startRound(){
@@ -186,58 +151,52 @@ async function startRound(){
   startBtn.disabled = true;
   clearMarks();
 
-  // 初期配置
   slotOfBoxId = [0,1,2];
   pickRandomBallSlot();
   setTransition(Number(speedInput.value));
-  applyPositions();
-
   showBall(true);
   setClickable(false);
 
-  msg.textContent = "ボールの位置あてるだけのやつ。";
+  applyPositions();
+
+  msg.textContent = "見て。ボールの位置を覚えろ。";
   await sleep(900);
 
-  // 隠す
   phase = "hide";
-  msg.textContent = "隠れて！。";
+  msg.textContent = "隠すよ。";
   showBall(false);
   await sleep(450);
 
-  // シャッフル
   phase = "shuffle";
   const moves = Number(movesInput.value);
   msg.textContent = `シャッフル中…（${moves}回）`;
-for (let i = 0; i < moves; i++) {
-  const speed = Number(speedInput.value);
 
-  // たまに「間」を入れて追跡を崩す
-  if (Math.random() < FEINT_CHANCE) {
-    msg.textContent = "シャッフル中…（フェイント）";
-    await sleep(Math.floor(speed * FEINT_PAUSE_RATIO));
-  } else {
-    msg.textContent = `シャッフル中…（${moves}回）`;
-  }
+  for (let i = 0; i < moves; i++){
+    const speed = Number(speedInput.value);
 
-  // 通常の入れ替え
-  const [sa, sb] = randomSwapPair();
-  swapSlots(sa, sb);
-  applyPositions();
-  await sleep(speed + 60);
+    if (Math.random() < FEINT_CHANCE){
+      msg.textContent = "シャッフル中…（フェイント）";
+      await sleep(Math.floor(speed * FEINT_PAUSE_RATIO));
+    } else {
+      msg.textContent = `シャッフル中…（${moves}回）`;
+    }
 
-  // さらにたまに「ちょい戻し」フェイント（入れ替え→即別の入れ替え）
-  if (Math.random() < FEINT_CHANCE * 0.6) {
-    await sleep(Math.floor(speed * 0.18));
-    const [sa2, sb2] = randomSwapPair();
-    swapSlots(sa2, sb2);
+    const [sa, sb] = randomSwapPair();
+    swapSlots(sa, sb);
     applyPositions();
-    await sleep(speed * 0.65);
-  }
-}
+    await sleep(speed + 60);
 
-  // 当てる
+    if (Math.random() < FEINT_CHANCE * 0.6){
+      await sleep(Math.floor(speed * 0.18));
+      const [sa2, sb2] = randomSwapPair();
+      swapSlots(sa2, sb2);
+      applyPositions();
+      await sleep(speed * 0.65);
+    }
+  }
+
   phase = "guess";
-  msg.textContent = "どれに入ってるか箱を押すだけ。";
+  msg.textContent = "どれに入ってるかわかると思うけど、箱をタップして。";
   setClickable(true);
 }
 
@@ -247,34 +206,25 @@ function onPick(boxId){
   phase = "result";
   setClickable(false);
 
-  // 選んだ箱が今いるスロット
   const chosenSlot = slotOfBoxId[boxId];
-
-  // 正解は ballSlot
   const correct = chosenSlot === ballSlot;
 
-  // ボールを見せる（正解スロット位置に）
   showBall(true);
   applyPositions();
 
   clearMarks();
-  if (correct) {
+  if (correct){
     boxes[boxId].classList.add("correct");
     win++;
-    msg.textContent = "はずれ！。";
-    // 勝ったらレベル上げ（おまけ）
     level++;
+    msg.textContent = "当たり！";
   } else {
     boxes[boxId].classList.add("wrong");
-
-    // 正解の箱にも印を付ける
     const correctBoxId = slotOfBoxId.indexOf(ballSlot);
     if (correctBoxId >= 0) boxes[correctBoxId].classList.add("correct");
-
     lose++;
-    msg.textContent = "普通にハズレ。";
-    // 負けたらレベル下げ（最低1）
     level = Math.max(1, level - 1);
+    msg.textContent = "ハズレ。論外。";
   }
 
   levelEl.textContent = String(level);
@@ -297,13 +247,14 @@ function resetAll(){
 
   slotOfBoxId = [0,1,2];
   ballSlot = 0;
+
   setTransition(Number(speedInput.value));
-  applyPositions();
-  showBall(true);
   setClickable(false);
   clearMarks();
+  showBall(true);
+  applyPositions();
 
-  msg.textContent = "STARTを押して。最初はボールが見える。";
+  msg.textContent = "STARTを押す。最初はボールが見える。";
 }
 
 startBtn.addEventListener("click", startRound);
@@ -319,17 +270,11 @@ speedInput.addEventListener("input", () => {
 });
 
 window.addEventListener("resize", () => {
-  // 画面幅が変わったら位置を再計算
   applyPositions();
 });
 
-// 初期
 movesVal.textContent = String(movesInput.value);
 speedVal.textContent = `${speedInput.value}ms`;
+
 render();
 resetAll();
-
-
-
-
-
