@@ -17,7 +17,7 @@ const loseEl = document.getElementById("lose");
 const FEINT_CHANCE = 0.35;
 const FEINT_PAUSE_RATIO = 0.45;
 
-let level = 1, win = 0, lose = 0;
+let round = 1, win = 0, lose = 0;
 
 let boxes = [];
 let ballEl = null;
@@ -235,18 +235,18 @@ function onPick(boxId){
   if (correct){
     boxes[boxId].classList.add("correct");
     win++;
-    level++;
+    round++;
     msg.textContent = "当たり！";
   } else {
     boxes[boxId].classList.add("wrong");
     const correctBoxId = slotOfBoxId.indexOf(ballSlot);
     if (correctBoxId >= 0) boxes[correctBoxId].classList.add("correct");
     lose++;
-    level = Math.max(1, level - 1);
+round++;
     msg.textContent = "ハズレ。論外。";
   }
 
-  levelEl.textContent = String(level);
+  levelEl.textContent = String(round);
   winEl.textContent = String(win);
   loseEl.textContent = String(lose);
 
@@ -255,7 +255,7 @@ function onPick(boxId){
 }
 
 function resetAll(){
-  level = 1; win = 0; lose = 0;
+  round = 1; win = 0; lose = 0;
   levelEl.textContent = "1";
   winEl.textContent = "0";
   loseEl.textContent = "0";
@@ -320,6 +320,7 @@ speedVal.textContent = `${speedInput.value}ms`;
 
 render();
 resetAll();
+
 
 
 
