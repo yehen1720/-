@@ -172,7 +172,7 @@ async function startRound(){
 
   slotOfBoxId = [0,1,2];
   pickRandomBallSlot();
-  setTransition(Number(speedInput.value));
+  setTransition(1000 - Number(speedInput.value));
   showBall(true);
   setClickable(false);
 
@@ -267,7 +267,7 @@ function resetAll(){
   slotOfBoxId = [0,1,2];
   ballSlot = 0;
 
-  setTransition(Number(speedInput.value));
+  setTransition(1000 - Number(speedInput.value));
   setClickable(false);
   clearMarks();
   showBall(true);
@@ -285,7 +285,7 @@ movesInput.addEventListener("input", () => {
 });
 speedInput.addEventListener("input", () => {
   speedVal.textContent = `${speedInput.value}ms`;
-  setTransition(Number(speedInput.value));
+  setTransition(1000 - Number(speedInput.value));
 });
 
 window.addEventListener("resize", () => {
@@ -297,5 +297,6 @@ speedVal.textContent = `${speedInput.value}ms`;
 
 render();
 resetAll();
+
 
 
