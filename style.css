@@ -215,4 +215,6 @@ body{
 .box:nth-child(3)::before { animation-delay: -0.64s, -2.6s; }
 
 .box .hole { display: none; }
+.hole { display: none !important; }
+
 
