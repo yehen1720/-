@@ -267,5 +267,35 @@ body{
   text-align: right;
 }
 
+/* 爆発パーティクル */
+.particle{
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 99999;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  animation: pop 520ms ease-out forwards;
+}
+
+@keyframes pop{
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+}
+
+/* ついでに画面を一瞬揺らす（任意・気持ちいい） */
+.screen-shake{
+  animation: shake 220ms ease-in-out;
+}
+@keyframes shake{
+  0%{ transform: translate(0,0); }
+  25%{ transform: translate(3px,-2px); }
+  50%{ transform: translate(-3px,2px); }
+  75%{ transform: translate(2px,1px); }
+  100%{ transform: translate(0,0); }
+}
+
 
 
