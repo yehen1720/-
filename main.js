@@ -291,7 +291,20 @@ function closeResetModal(){
 
 resetBtn.addEventListener("click", openResetModal);
 
-modalCancel.addEventListener("click", closeResetModal);
+if (modalBackdrop && modalOk && modalCancel){
+  resetBtn.addEventListener("click", () => {
+    modalBackdrop.classList.remove("hidden");
+  });
+
+  modalCancel.addEventListener("click", () => {
+    modalBackdrop.classList.add("hidden");
+  });
+
+  modalOk.addEventListener("click", () => {
+    modalBackdrop.classList.add("hidden");
+    resetAll();
+  });
+}
 
 modalOk.addEventListener("click", () => {
   closeResetModal();
@@ -320,6 +333,7 @@ speedVal.textContent = `${speedInput.value}ms`;
 
 render();
 resetAll();
+
 
 
 
