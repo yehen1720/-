@@ -193,5 +193,27 @@ body{
 .box:nth-child(2)::before{ animation-delay: -0.32s; }
 .box:nth-child(3)::before{ animation-delay: -0.64s; }
 
+.box .hole { display: none; }
+
+/* 箱の色をずっと変化させる */
+@keyframes colorShift {
+  0%   { background: hsl(200, 40%, 18%); }
+  25%  { background: hsl(260, 40%, 20%); }
+  50%  { background: hsl(320, 40%, 18%); }
+  75%  { background: hsl(140, 35%, 20%); }
+  100% { background: hsl(200, 40%, 18%); }
+}
+
+/* 変形してる箱の本体（::before）に色変化を適用 */
+.box::before{
+  animation:
+    dramaticMorph 0.95s ease-in-out infinite,
+    colorShift 4s linear infinite;
+}
+
+/* 3つの箱で色のタイミングを少しずらす */
+.box:nth-child(1)::before { animation-delay: 0s, 0s; }
+.box:nth-child(2)::before { animation-delay: -0.32s, -1.3s; }
+.box:nth-child(3)::before { animation-delay: -0.64s, -2.6s; }
 
 
