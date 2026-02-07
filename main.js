@@ -278,11 +278,30 @@ function resetAll(){
 
 startBtn.addEventListener("click", startRound);
 nextBtn.addEventListener("click", startRound);
-resetBtn.addEventListener("click", () => {
-  const ok = confirm("これリセットですけど");
-  if (!ok) return;
+function openResetModal(){
+  modalBackdrop.classList.remove("hidden");
+}
+function closeResetModal(){
+  modalBackdrop.classList.add("hidden");
+}
+
+resetBtn.addEventListener("click", openResetModal);
+
+modalCancel.addEventListener("click", closeResetModal);
+
+modalOk.addEventListener("click", () => {
+  closeResetModal();
   resetAll();
 });
+
+// 背景クリックで閉じる（任意）
+modalBackdrop.addEventListener("click", (e) => {
+  if (e.target === modalBackdrop) closeResetModal();
+});
+
+const modalBackdrop = document.getElementById("modalBackdrop");
+const modalOk = document.getElementById("modalOk");
+const modalCancel = document.getElementById("modalCancel");
 
 movesInput.addEventListener("input", () => {
   movesVal.textContent = String(movesInput.value);
@@ -301,6 +320,7 @@ speedVal.textContent = `${speedInput.value}ms`;
 
 render();
 resetAll();
+
 
 
 
