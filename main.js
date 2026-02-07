@@ -88,17 +88,27 @@ function applyPositions(){
 
   // 現在の箱幅を「隣スロットとの差」から推定
   const step = xs[1] - xs[0];
-  const rect = lane.getBoundingClientRect();
   const minGap = 10;
   let boxW = step - minGap;
   boxW = Math.max(90, Math.min(180, boxW));
 
-  // 箱サイズもJSで合わせる（CSSが効かなくても確実）
+  // 箱の位置＆サイズ
   for (let id = 0; id < 3; id++){
     const slot = slotOfBoxId[id];
     boxes[id].style.width = `${boxW}px`;
     boxes[id].style.left = `${xs[slot]}px`;
   }
+
+  // ボールを「ボールが入ってる箱の中」に入れる（ズレ防止の本命）
+  const boxIdAtBall = slotOfBoxId.indexOf(ballSlot);
+  if (boxIdAtBall >= 0) {
+    boxes[boxIdAtBall].appendChild(ballEl);
+    ballEl.style.left = "50%";
+    ballEl.style.top = "auto";
+    ballEl.style.bottom = "40px";
+    ballEl.style.transform = "translateX(-50%)";
+  }
+}
 
     // ボールは「該当スロットにいる箱」の中に見える位置へ（lane基準のtopで置く）
   const laneRect = lane.getBoundingClientRect();
@@ -315,6 +325,7 @@ movesVal.textContent = String(movesInput.value);
 speedVal.textContent = `${speedInput.value}ms`;
 render();
 resetAll();
+
 
 
 
