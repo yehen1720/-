@@ -4,6 +4,10 @@ const startBtn = document.getElementById("start");
 const nextBtn = document.getElementById("next");
 const resetBtn = document.getElementById("reset");
 
+const modalBackdrop = document.getElementById("modalBackdrop");
+const modalOk = document.getElementById("modalOk");
+const modalCancel = document.getElementById("modalCancel");
+
 const movesInput = document.getElementById("moves");
 const movesVal = document.getElementById("movesVal");
 const speedInput = document.getElementById("speed");
@@ -299,10 +303,6 @@ modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeResetModal();
 });
 
-const modalBackdrop = document.getElementById("modalBackdrop");
-const modalOk = document.getElementById("modalOk");
-const modalCancel = document.getElementById("modalCancel");
-
 movesInput.addEventListener("input", () => {
   movesVal.textContent = String(movesInput.value);
 });
@@ -320,6 +320,7 @@ speedVal.textContent = `${speedInput.value}ms`;
 
 render();
 resetAll();
+
 
 
 
