@@ -51,18 +51,24 @@ function setClickable(on){
 // 画面幅に応じて「箱幅・間隔・左位置」を安全に計算する（重なり防止の本命）
 function calcLayout(){
   const rect = lane.getBoundingClientRect();
-  const PAD = 18;     // CSSのlane paddingと合わせる
-  const minGap = 10;
+  const PAD = 18;       // CSSの .lane padding と同じ
   const maxW = 180;
-  const minW = 90;
+  const minW = 84;      // ちょい下げる（狭い端末でも3つ入れるため）
+  const maxGap = 14;
 
   const available = rect.width - PAD * 2;
 
-  let boxW = Math.floor((available - minGap * 2) / 3);
+  // まず「現実的なgap」を決める（狭い時は小さくなる）
+  let gap = Math.min(maxGap, Math.floor(available * 0.04));
+  gap = Math.max(0, gap);
+
+  // gap込みで箱幅を計算（必ず入る）
+  let boxW = Math.floor((available - gap * 2) / 3);
   boxW = Math.max(minW, Math.min(maxW, boxW));
 
-  let gap = Math.floor((available - boxW * 3) / 2);
-  gap = Math.max(minGap, gap);
+  // 箱幅が決まったら、残りからgapを再計算（足りなければ0まで落とす）
+  gap = Math.floor((available - boxW * 3) / 2);
+  gap = Math.max(0, gap);
 
   const xs = [PAD, PAD + boxW + gap, PAD + 2 * (boxW + gap)];
   const boxH = Math.round(boxW * 1.15);
@@ -278,3 +284,4 @@ speedVal.textContent = `${speedInput.value}ms`;
 
 render();
 resetAll();
+
