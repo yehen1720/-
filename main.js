@@ -8,11 +8,6 @@ const modalBackdrop = document.getElementById("modalBackdrop");
 const modalOk = document.getElementById("modalOk");
 const modalCancel = document.getElementById("modalCancel");
 
-const movesInput = document.getElementById("moves");
-const movesVal = document.getElementById("movesVal");
-const speedInput = document.getElementById("speed");
-const speedVal = document.getElementById("speedVal");
-
 const levelEl = document.getElementById("level");
 const winEl = document.getElementById("win");
 const loseEl = document.getElementById("lose");
@@ -360,14 +355,6 @@ modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeResetModal();
 });
 
-movesInput.addEventListener("input", () => {
-  movesVal.textContent = String(movesInput.value);
-});
-speedInput.addEventListener("input", () => {
-  speedVal.textContent = `${speedInput.value}ms`;
-  setTransition(1000 - Number(speedInput.value));
-});
-
 window.addEventListener("resize", () => {
   applyPositions();
 });
@@ -381,6 +368,7 @@ lane.addEventListener("selectstart", (e) => e.preventDefault());
 
 render();
 resetAll();
+
 
 
 
