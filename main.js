@@ -223,11 +223,11 @@ async function startRound(){
   await sleep(450);
 
   phase = "shuffle";
-  const moves = Number(movesInput.value);
+  const moves = 5; // ←固定
   msg.textContent = `シャッフル中…（${moves}回）`;
 
   for (let i = 0; i < moves; i++){
-    const speed = Number(speedInput.value);
+    const speed = 700; // ←固定
 
     if (Math.random() < FEINT_CHANCE){
       msg.textContent = "シャッフル中…（フェイント）";
@@ -381,6 +381,7 @@ lane.addEventListener("selectstart", (e) => e.preventDefault());
 
 render();
 resetAll();
+
 
 
 
