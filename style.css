@@ -313,5 +313,10 @@ input, textarea{
   -webkit-touch-callout: default;
 }
 
+input[type="range"]:disabled{
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 
 
