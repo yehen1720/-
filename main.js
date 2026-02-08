@@ -375,8 +375,13 @@ window.addEventListener("resize", () => {
 movesVal.textContent = String(movesInput.value);
 speedVal.textContent = `${speedInput.value}ms`;
 
+// ゲームエリアではコンテキストメニュー（長押し）を無効化
+lane.addEventListener("contextmenu", (e) => e.preventDefault());
+lane.addEventListener("selectstart", (e) => e.preventDefault());
+
 render();
 resetAll();
+
 
 
 
