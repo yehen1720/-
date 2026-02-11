@@ -4,6 +4,8 @@ const startBtn = document.getElementById("start");
 const nextBtn = document.getElementById("next");
 const resetBtn = document.getElementById("reset");
 
+let boxCount = 3;
+
 const modalBackdrop = document.getElementById("modalBackdrop");
 const modalOk = document.getElementById("modalOk");
 const modalCancel = document.getElementById("modalCancel");
@@ -87,40 +89,47 @@ function calcLayout(){
   if (rect.width < 360) PAD = 12;
   if (rect.width < 320) PAD = 8;
 
-  const available = rect.width - PAD * 2;
+  const cols = 3;
+  const rows = Math.ceil(boxCount / cols);
 
-  // gapは箱が多いほど小さめに
-  let gap = Math.floor(available * 0.02);
-  gap = Math.max(0, Math.min(12, gap));
+  const availableW = rect.width - PAD * 2;
 
-  // 箱幅を箱数で割って作る（必ず収まる）
-  let boxW = Math.floor((available - gap * (boxCount - 1)) / boxCount);
-  boxW = Math.max(34, Math.min(140, boxW)); // 9箱でも破綻しない
+  let gap = Math.floor(availableW * 0.03);
+  gap = Math.max(6, Math.min(14, gap));
 
-  // 余りからgapを再計算
-  gap = Math.floor((available - boxW * boxCount) / Math.max(1, (boxCount - 1)));
-  gap = Math.max(0, gap);
+  let boxW = Math.floor((availableW - gap * (cols - 1)) / cols);
+  boxW = Math.max(44, Math.min(160, boxW));
+
+  const boxH = Math.round(boxW * 1.05);
 
   const xs = [];
-  for (let i = 0; i < boxCount; i++){
-    xs.push(PAD + i * (boxW + gap));
+  for (let c = 0; c < cols; c++){
+    xs.push(PAD + c * (boxW + gap));
   }
 
-  const boxH = Math.round(boxW * 1.15);
-  return { xs, boxW, boxH };
+  const vgap = Math.max(10, Math.min(18, Math.floor(boxH * 0.18)));
+  const ys = [];
+  for (let r = 0; r < rows; r++){
+    ys.push(30 + r * (boxH + vgap)); // 上余白30
+  }
+
+  return { xs, ys, boxW, boxH, cols };
 }
 
 function applyPositions(){
-  const { xs, boxW, boxH } = calcLayout();
+  const { xs, ys, boxW, boxH, cols } = calcLayout();
 
   for (let id = 0; id < boxCount; id++){
-    const slot = slotOfBoxId[id];
-    boxes[id].style.width = `${boxW}px`;
+    const slot = slotOfBoxId[id]; // 0..8
+    const r = Math.floor(slot / cols);
+    const c = slot % cols;
+
+    boxes[id].style.width  = `${boxW}px`;
     boxes[id].style.height = `${boxH}px`;
-    boxes[id].style.left = `${xs[slot]}px`;
+    boxes[id].style.left   = `${xs[c]}px`;
+    boxes[id].style.top    = `${ys[r]}px`;
   }
 
-  // ボールは「ballBoxId の箱」に常に入れる
   if (ballBoxId >= 0 && ballBoxId < boxCount){
     boxes[ballBoxId].appendChild(ballEl);
     ballEl.style.left = "50%";
@@ -145,13 +154,14 @@ function swapSlots(sa, sb){
   for (let id = 0; id < boxCount; id++){
     boxAtSlot[slotOfBoxId[id]] = id;
   }
+
   const boxA = boxAtSlot[sa];
   const boxB = boxAtSlot[sb];
 
   slotOfBoxId[boxA] = sb;
   slotOfBoxId[boxB] = sa;
 
-  // ballBoxId は動かさない（箱が動くので追従する）
+  // ballBoxIdは動かさない（箱が動くので追従する）
 }
 
 function render(){
@@ -354,6 +364,7 @@ lane.addEventListener("selectstart", (e) => e.preventDefault());
 
 render();
 resetAll();
+
 
 
 
