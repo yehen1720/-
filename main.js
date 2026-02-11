@@ -65,6 +65,9 @@ let round = 1;
 let win = 0;
 let lose = 0;
 
+let startTime = 0;   // ゲーム開始時刻
+let endTime = 0;     // クリア時刻
+
 let phase = "idle"; // idle/show/hide/shuffle/guess/result
 
 let boxCount = 3;
@@ -251,7 +254,12 @@ function setRoundBoxes(){
 }
 
 async function startRound(){
-  const d = setRoundBoxes();
+// ROUND1開始の瞬間だけタイマー開始
+if (round === 1 && startTime === 0){
+  startTime = Date.now();
+}
+  
+const d = setRoundBoxes();
   render();
   document.body.classList.toggle("round99", round === 99);
 
@@ -320,23 +328,41 @@ function onPick(boxId){
   clearMarks();
 
   if (correct){
-    boxes[boxId].classList.add("correct");
-    win++;
-round++; // 正解のときだけ進む
+  boxes[boxId].classList.add("correct");
+  win++;
 
-// ★Round5クリア後（roundが6になった瞬間）に99へワープ
-if (round === 6) {
-  round = 99;
+  // ★ROUND100は「当てたらゲームクリア」で終わり（ここが最優先）
+  if (round === 100){
+    endTime = Date.now();
+    const seconds = Math.floor((endTime - startTime) / 1000);
+
+    msg.textContent = `${seconds}秒無駄にしました。ゲームクリア。`;
+
+    // 終了状態に固定
+    phase = "idle";
+    setClickable(false);
+    nextBtn.disabled = true;
+    startBtn.disabled = true;
+
+    // ROUND99演出も切る
+    document.body.classList.remove("round99");
+    return;
+  }
+
+  // 正解したので次へ
+  round++;
+
+  // ★Round5クリア後（roundが6になった瞬間）に99へワープ
+  if (round === 6) round = 99;
+
+  msg.textContent = (round === 99) ? "センスあるから本番開始" : "当たり！";
+} else {
+  boxes[boxId].classList.add("wrong");
+  boxes[ballBoxId].classList.add("correct");
+  lose++;
+  msg.textContent = "ハズレ。論外。";
 }
 
-msg.textContent = (round === 99) ? "センスあるから本番開始" : "当たり！";
-
-  } else {
-    boxes[boxId].classList.add("wrong");
-    boxes[ballBoxId].classList.add("correct");
-    lose++;
-    msg.textContent = "ハズレ。論外。";
-  }
 
   levelEl.textContent = String(round);
   winEl.textContent = String(win);
@@ -347,6 +373,9 @@ startBtn.disabled = true;
 }
 
 function resetAll(){
+startTime = 0;
+endTime = 0;
+
   round = 1;
   win = 0;
   lose = 0;
@@ -394,6 +423,7 @@ nextBtn.addEventListener("click", startRound);
 
 // 初期化
 resetAll();
+
 
 
 
