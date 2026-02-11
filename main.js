@@ -26,6 +26,24 @@ const FEINT_PAUSE_RATIO = 0.45;
 const SHUFFLE_MOVES = 5;
 const BASE_SPEED = 700;
 
+function getDifficulty(r){
+  // r = 現在のround（1,2,3...）
+  const isHard = (r >= 2);
+
+  const boxCount = isHard ? 9 : 3;
+
+  // 回数：Round2からじわ増え（上限で頭打ち）
+  const moves = isHard ? 30 + (r - 2) * 3 : 5;
+
+  // 速度：Round2で一気に速く、その後ゆっくり速く（下限で頭打ち）
+  const speed = isHard ? Math.max(350 - (r - 2) * 18, 220) : 700;
+
+  // フェイント：ちょい増やす（最大0.65）
+  const feintChance = isHard ? Math.min(0.35 + (r - 2) * 0.03, 0.65) : 0.35;
+
+  return { boxCount, moves, speed, feintChance };
+}
+
 let round = 1;
 let win = 0;
 let lose = 0;
@@ -210,13 +228,17 @@ function render(){
 
 // --------- ゲーム進行 ----------
 function setRoundBoxes(){
-  boxCount = (round >= 2) ? 9 : 3;
+  const d = getDifficulty(round);
+
+  boxCount = d.boxCount;
   slotOfBoxId = Array.from({ length: boxCount }, (_, i) => i);
   ballBoxId = Math.floor(Math.random() * boxCount);
+
+  return d; // startRoundで moves/speed/feint を使う
 }
 
 async function startRound(){
-  setRoundBoxes();
+  const d = setRoundBoxes();
   render();
 
   phase = "show";
@@ -224,7 +246,7 @@ async function startRound(){
   startBtn.disabled = true;
   clearMarks();
 
-  setTransition(BASE_SPEED);
+  setTransition(d.speed);
   showBall(true);
   setClickable(false);
   applyPositions();
@@ -238,28 +260,24 @@ async function startRound(){
   await sleep(450);
 
   phase = "shuffle";
+  msg.textContent = "";
 
-  const speed = (round >= 2) ? Math.floor(BASE_SPEED / 2) : BASE_SPEED;
-setTransition(speed);
-  
-  msg.textContent = ""; // シャッフル中は表示なし
-
-  for (let i = 0; i < SHUFFLE_MOVES; i++){
-    if (Math.random() < FEINT_CHANCE){
-      await sleep(Math.floor(speed * FEINT_PAUSE_RATIO));
+  for (let i = 0; i < d.moves; i++){
+    if (Math.random() < d.feintChance){
+      await sleep(Math.floor(d.speed * FEINT_PAUSE_RATIO));
     }
 
     const [sa, sb] = randomSwapPair();
     swapSlots(sa, sb);
     applyPositions();
-    await sleep(speed + 60);
+    await sleep(d.speed + 60);
 
-    if (Math.random() < FEINT_CHANCE * 0.6){
-      await sleep(Math.floor(speed * 0.18));
+    if (Math.random() < d.feintChance * 0.6){
+      await sleep(Math.floor(d.speed * 0.18));
       const [sa2, sb2] = randomSwapPair();
       swapSlots(sa2, sb2);
       applyPositions();
-      await sleep(speed * 0.65);
+      await sleep(d.speed * 0.65);
     }
   }
 
@@ -371,5 +389,6 @@ nextBtn.addEventListener("click", startRound);
 
 // 初期化
 resetAll();
+
 
 
