@@ -24,6 +24,7 @@ let ballEl = null;
 let ballSlot = 0;           // ボールが入っているスロット(0..2)
 let slotOfBoxId = [0,1,2];  // boxId(0..2) が今どのスロットにいるか
 let phase = "idle";         // idle/show/hide/shuffle/guess/result
+let boxCount = 3;
 
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
@@ -79,62 +80,49 @@ function setClickable(on){
   }
 }
 
-// 画面幅に応じて「箱幅・間隔・左位置」を安全に計算する（重なり防止の本命）
 function calcLayout(){
   const rect = lane.getBoundingClientRect();
 
-  // laneのpaddingはCSSと合わせる（.lane { padding: 18px; }）
   let PAD = 18;
-
-  const maxW = 180;
-  const maxGap = 14;
-
-  // 画面が狭い時はPADも少し削って“入る余地”を増やす
   if (rect.width < 360) PAD = 12;
   if (rect.width < 320) PAD = 8;
 
   const available = rect.width - PAD * 2;
 
-  // gapは狭い時ほど小さく（0にもなる）
-  let gap = Math.min(maxGap, Math.floor(available * 0.04));
+  // gapは箱が多いほど小さめに
+  let gap = Math.floor(available * 0.02);
+  gap = Math.max(0, Math.min(12, gap));
+
+  // 箱幅を箱数で割って作る（必ず収まる）
+  let boxW = Math.floor((available - gap * (boxCount - 1)) / boxCount);
+  boxW = Math.max(34, Math.min(140, boxW)); // 9箱でも破綻しない
+
+  // 余りからgapを再計算
+  gap = Math.floor((available - boxW * boxCount) / Math.max(1, (boxCount - 1)));
   gap = Math.max(0, gap);
 
-  // まずgap込みで箱幅を計算
-  let boxW = Math.floor((available - gap * 2) / 3);
-  boxW = Math.min(maxW, boxW);
+  const xs = [];
+  for (let i = 0; i < boxCount; i++){
+    xs.push(PAD + i * (boxW + gap));
+  }
 
-  // 最小幅は「画面に合わせて可変」にする（ここがポイント）
-  // 目標minは60pxだけど、入らないなら available/3 まで下げる
-  const targetMin = 60;
-  const dynamicMin = Math.max(40, Math.floor(available / 3)); // どうしても狭い時の保険
-  const minW = Math.min(targetMin, dynamicMin);
-  boxW = Math.max(minW, boxW);
-
-  // 箱幅が確定したら gap を再計算（足りなければ0）
-  gap = Math.floor((available - boxW * 3) / 2);
-  gap = Math.max(0, gap);
-
-  const xs = [PAD, PAD + boxW + gap, PAD + 2 * (boxW + gap)];
   const boxH = Math.round(boxW * 1.15);
-
   return { xs, boxW, boxH };
 }
 
 function applyPositions(){
   const { xs, boxW, boxH } = calcLayout();
 
-  // 箱の位置＆サイズ
-  for (let id = 0; id < 3; id++){
+  for (let id = 0; id < boxCount; id++){
     const slot = slotOfBoxId[id];
     boxes[id].style.width = `${boxW}px`;
     boxes[id].style.height = `${boxH}px`;
     boxes[id].style.left = `${xs[slot]}px`;
   }
 
-  // ボールは「入ってる箱」の中に移動（ズレ根絶）
-  const boxIdAtBall = slotOfBoxId.indexOf(ballSlot);
-  if (boxIdAtBall >= 0){
-    boxes[boxIdAtBall].appendChild(ballEl);
+  // ボールは「ballBoxId の箱」に常に入れる
+  if (ballBoxId >= 0 && ballBoxId < boxCount){
+    boxes[ballBoxId].appendChild(ballEl);
     ballEl.style.left = "50%";
     ballEl.style.bottom = "18px";
     ballEl.style.transform = "translateX(-50%)";
@@ -146,15 +134,15 @@ function pickRandomBallSlot(){
 }
 
 function randomSwapPair(){
-  const a = Math.floor(Math.random() * 3);
-  let b = Math.floor(Math.random() * 3);
-  while (b === a) b = Math.floor(Math.random() * 3);
+  const a = Math.floor(Math.random() * boxCount);
+  let b = Math.floor(Math.random() * boxCount);
+  while (b === a) b = Math.floor(Math.random() * boxCount);
   return [a,b];
 }
 
 function swapSlots(sa, sb){
-  const boxAtSlot = [0,0,0];
-  for (let id=0; id<3; id++){
+  const boxAtSlot = new Array(boxCount).fill(0);
+  for (let id = 0; id < boxCount; id++){
     boxAtSlot[slotOfBoxId[id]] = id;
   }
   const boxA = boxAtSlot[sa];
@@ -163,23 +151,18 @@ function swapSlots(sa, sb){
   slotOfBoxId[boxA] = sb;
   slotOfBoxId[boxB] = sa;
 
-  // ボールは箱と一緒に移動して見えるべきなので、スロット入れ替えに追従
-  if (ballSlot === sa) ballSlot = sb;
-  else if (ballSlot === sb) ballSlot = sa;
+  // ballBoxId は動かさない（箱が動くので追従する）
 }
 
 function render(){
   lane.innerHTML = "";
   boxes = [];
 
-  for (let id = 0; id < 3; id++){
+  for (let id = 0; id < boxCount; id++){
     const b = document.createElement("div");
     b.className = "box";
     b.dataset.id = String(id);
-    b.innerHTML = `
-      <div class="lid"></div>
-      <div class="hole"></div>
-    `;
+    b.innerHTML = `<div class="lid"></div>`;
     b.addEventListener("click", () => onPick(id));
     lane.appendChild(b);
     boxes.push(b);
@@ -196,6 +179,16 @@ function render(){
 }
 
 async function startRound(){
+  
+  // Round1:3箱、Round2以降:9箱
+boxCount = (round >= 2) ? 9 : 3;
+
+// 箱数が変わるのでスロット初期化して作り直す
+slotOfBoxId = Array.from({length: boxCount}, (_, i) => i);
+ballBoxId = Math.floor(Math.random() * boxCount);
+
+render();
+  
   phase = "show";
   nextBtn.disabled = true;
   startBtn.disabled = true;
@@ -265,8 +258,7 @@ function onPick(boxId){
   phase = "result";
   setClickable(false);
 
-  const chosenSlot = slotOfBoxId[boxId];
-  const correct = chosenSlot === ballSlot;
+const correct = boxId === ballBoxId;
 
   showBall(true);
   applyPositions();
@@ -279,8 +271,7 @@ function onPick(boxId){
     msg.textContent = "当たり！";
   } else {
     boxes[boxId].classList.add("wrong");
-    const correctBoxId = slotOfBoxId.indexOf(ballSlot);
-    if (correctBoxId >= 0) boxes[correctBoxId].classList.add("correct");
+    boxes[ballBoxId].classList.add("correct");
     lose++;
 round++;
     msg.textContent = "ハズレ。論外。";
@@ -363,6 +354,7 @@ lane.addEventListener("selectstart", (e) => e.preventDefault());
 
 render();
 resetAll();
+
 
 
 
