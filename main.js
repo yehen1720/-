@@ -322,10 +322,11 @@ function onPick(boxId){
   applyPositions();
 
 clearMarks();
+
 if (correct){
   boxes[boxId].classList.add("correct");
   win++;
-  round++;                 // ★ここだけ
+  round++; // ★正解のときだけ進む
   msg.textContent = "当たり！";
 } else {
   boxes[boxId].classList.add("wrong");
@@ -337,6 +338,10 @@ if (correct){
 levelEl.textContent = String(round);
 winEl.textContent = String(win);
 loseEl.textContent = String(lose);
+
+// ★ここも大事：ハズレのときはNEXTを押させない
+nextBtn.disabled = !correct;
+startBtn.disabled = true;
 
   // 次ラウンドへ
   if (correct){
@@ -413,6 +418,7 @@ nextBtn.addEventListener("click", startRound);
 
 // 初期化
 resetAll();
+
 
 
 
