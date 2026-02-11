@@ -28,29 +28,43 @@ const FEINT_PAUSE_RATIO = 0.45;
 const BASE_SPEED = 700;
 
 function getDifficulty(r){
-  const isHard = (r >= 2);
 
-  const boxCount = isHard ? 9 : 3;
+  // ===== Round6に入った瞬間 → 表示だけ99に飛ばす =====
+  if (r === 6){
+    round = 99; // ★表示ジャンプ
+    r = 99;     // ★難易度計算も99として扱う
+  }
 
-  // Round2から30回固定
-  const moves = isHard ? 30 : 5;
+  // ===== Round1 =====
+  if (r === 1){
+    return {
+      boxCount: 3,
+      moves: 5,
+      speed: 700,
+      feintChance: 0.2,
+      gap: 80
+    };
+  }
 
-  // スピード（数値が小さいほど速い）
-  let speed;
-  if (r === 1) speed = 700;
-  else if (r === 2) speed = 350;
-  else if (r === 3) speed = 350;
-  else speed = Math.max(350 / Math.pow(2, r - 3), 60); // 下限60ms
+  // ===== Round2〜5：3箱のまま徐々に強化 =====
+  if (r >= 2 && r <= 5){
+    return {
+      boxCount: 3,
+      moves: 5 + (r - 1) * 4,          // 回数じわ増え
+      speed: 700 - (r - 1) * 120,      // 徐々に速く
+      feintChance: 0.25 + (r - 2) * 0.05,
+      gap: 70 - (r - 2) * 12
+    };
+  }
 
-  // フェイント確率（Round3だけ無し）
-  let feintChance;
-  if (r === 3) feintChance = 0;
-  else feintChance = isHard ? 0.35 : 0.35;
-
-  // シャッフル間隔（動きの速さとは別）
-  const gap = isHard ? 10 : 60;
-
-  return { boxCount, moves, speed, feintChance, gap };
+  // ===== Round99（旧Round2の地獄設定） =====
+  return {
+    boxCount: 9,
+    moves: 30,
+    speed: 350,
+    feintChance: 0.35,
+    gap: 10
+  };
 }
 
 let round = 1;
@@ -376,4 +390,5 @@ nextBtn.addEventListener("click", startRound);
 
 // 初期化
 resetAll();
+
 
