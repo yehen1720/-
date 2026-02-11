@@ -334,7 +334,10 @@ function onPick(boxId){
   }
 
   // 次ラウンドへ
-  round++;
+  if (correct){
+  round++;   // ← 正解したときだけ進む
+}
+
   levelEl.textContent = String(round);
   winEl.textContent = String(win);
   loseEl.textContent = String(lose);
@@ -405,6 +408,7 @@ nextBtn.addEventListener("click", startRound);
 
 // 初期化
 resetAll();
+
 
 
 
