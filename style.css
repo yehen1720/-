@@ -86,7 +86,7 @@ body{
 /* ここが重要：laneは相対、箱は絶対配置 */
 .lane{
   position: relative;
-  height: 360px;
+  height: 520px;
   padding: 18px;
 }
 
@@ -151,7 +151,7 @@ body{
 
 /* スマホ縦はlaneを少し高く */
 @media (max-width: 600px){
-  .lane{ height: 360px; }
+  .lane{ height: 600px; }
 }
 
 /* 箱の中に「変形する皮」を追加して、丸⇄四角を派手にやる */
@@ -317,6 +317,7 @@ input[type="range"]:disabled{
   opacity: 0.55;
   cursor: not-allowed;
 }
+
 
 
 
