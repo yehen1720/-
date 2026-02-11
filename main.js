@@ -4,8 +4,6 @@ const startBtn = document.getElementById("start");
 const nextBtn = document.getElementById("next");
 const resetBtn = document.getElementById("reset");
 
-let boxCount = 3;
-
 const modalBackdrop = document.getElementById("modalBackdrop");
 const modalOk = document.getElementById("modalOk");
 const modalCancel = document.getElementById("modalCancel");
@@ -13,6 +11,8 @@ const modalCancel = document.getElementById("modalCancel");
 const levelEl = document.getElementById("level");
 const winEl = document.getElementById("win");
 const loseEl = document.getElementById("lose");
+
+let boxCount = 3;
 
 // フェイント設定
 const FEINT_CHANCE = 0.35;
@@ -364,6 +364,7 @@ lane.addEventListener("selectstart", (e) => e.preventDefault());
 
 render();
 resetAll();
+
 
 
 
