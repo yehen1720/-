@@ -24,7 +24,7 @@ const FEINT_PAUSE_RATIO = 0.45;
 
 // 固定難易度
 const SHUFFLE_MOVES = 5;
-const SHUFFLE_SPEED = 700;
+const BASE_SPEED = 700;
 
 let round = 1;
 let win = 0;
@@ -204,7 +204,7 @@ function render(){
   setClickable(false);
   showBall(true);
 
-  setTransition(SHUFFLE_SPEED);
+  setTransition(_SPEED);
   applyPositions();
 }
 
@@ -224,7 +224,7 @@ async function startRound(){
   startBtn.disabled = true;
   clearMarks();
 
-  setTransition(SHUFFLE_SPEED);
+  setTransition(_SPEED);
   showBall(true);
   setClickable(false);
   applyPositions();
@@ -238,24 +238,28 @@ async function startRound(){
   await sleep(450);
 
   phase = "shuffle";
+
+  const speed = (round >= 2) ? Math.floor(BASE_SPEED / 2) : BASE_SPEED;
+setTransition(speed);
+  
   msg.textContent = ""; // シャッフル中は表示なし
 
   for (let i = 0; i < SHUFFLE_MOVES; i++){
     if (Math.random() < FEINT_CHANCE){
-      await sleep(Math.floor(SHUFFLE_SPEED * FEINT_PAUSE_RATIO));
+      await sleep(Math.floor(speed * FEINT_PAUSE_RATIO));
     }
 
     const [sa, sb] = randomSwapPair();
     swapSlots(sa, sb);
     applyPositions();
-    await sleep(SHUFFLE_SPEED + 60);
+    await sleep(speed + 60);
 
     if (Math.random() < FEINT_CHANCE * 0.6){
-      await sleep(Math.floor(SHUFFLE_SPEED * 0.18));
+      await sleep(Math.floor(speed * 0.18));
       const [sa2, sb2] = randomSwapPair();
       swapSlots(sa2, sb2);
       applyPositions();
-      await sleep(SHUFFLE_SPEED * 0.65);
+      await sleep(speed * 0.65);
     }
   }
 
@@ -367,3 +371,4 @@ nextBtn.addEventListener("click", startRound);
 
 // 初期化
 resetAll();
+
