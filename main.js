@@ -343,10 +343,7 @@ loseEl.textContent = String(lose);
 nextBtn.disabled = !correct;
 startBtn.disabled = true;
 
-  // 次ラウンドへ
-  if (correct){
-  round++;   // ← 正解したときだけ進む
-}
+ 
 
   levelEl.textContent = String(round);
   winEl.textContent = String(win);
@@ -418,6 +415,7 @@ nextBtn.addEventListener("click", startRound);
 
 // 初期化
 resetAll();
+
 
 
 
