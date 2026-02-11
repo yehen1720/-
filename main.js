@@ -40,8 +40,9 @@ function getDifficulty(r){
 
   // フェイント：ちょい増やす（最大0.65）
   const feintChance = isHard ? Math.min(0.35 + (r - 2) * 0.03, 0.65) : 0.35;
-
-  return { boxCount, moves, speed, feintChance };
+  const gap = isHard ? Math.max(10 - (r - 2) * 2, 0) : 60;
+  
+  return { boxCount, moves, speed, feintChance, gap };
 }
 
 let round = 1;
@@ -270,7 +271,7 @@ async function startRound(){
     const [sa, sb] = randomSwapPair();
     swapSlots(sa, sb);
     applyPositions();
-    await sleep(d.speed + 60);
+    await sleep(d.gap);
 
     if (Math.random() < d.feintChance * 0.6){
       await sleep(Math.floor(d.speed * 0.18));
@@ -389,6 +390,7 @@ nextBtn.addEventListener("click", startRound);
 
 // 初期化
 resetAll();
+
 
 
 
