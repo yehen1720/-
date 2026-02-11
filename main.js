@@ -1,3 +1,9 @@
+// =======================
+// ウエノゲーム main.js（差し替え版）
+// Round1: 3箱 / Round2以降: 9箱（3×3）
+// シャッフル: 5回固定 / スピード: 700ms固定
+// =======================
+
 const lane = document.getElementById("lane");
 const msg = document.getElementById("msg");
 const startBtn = document.getElementById("start");
@@ -8,42 +14,49 @@ const modalBackdrop = document.getElementById("modalBackdrop");
 const modalOk = document.getElementById("modalOk");
 const modalCancel = document.getElementById("modalCancel");
 
-const levelEl = document.getElementById("level");
+const levelEl = document.getElementById("level"); // 表示はROUND扱い
 const winEl = document.getElementById("win");
 const loseEl = document.getElementById("lose");
-
-let boxCount = 3;
 
 // フェイント設定
 const FEINT_CHANCE = 0.35;
 const FEINT_PAUSE_RATIO = 0.45;
 
-let round = 1, win = 0, lose = 0;
+// 固定難易度
+const SHUFFLE_MOVES = 5;
+const SHUFFLE_SPEED = 700;
 
+let round = 1;
+let win = 0;
+let lose = 0;
+
+let phase = "idle"; // idle/show/hide/shuffle/guess/result
+
+let boxCount = 3;
 let boxes = [];
 let ballEl = null;
 
-let ballSlot = 0;           // ボールが入っているスロット(0..2)
-let slotOfBoxId = [];  // boxId(0..2) が今どのスロットにいるか
-let phase = "idle";         // idle/show/hide/shuffle/guess/result
+// slotOfBoxId[boxId] = slotIndex（0..boxCount-1）
+let slotOfBoxId = [];
+
+// ボールが入ってる“箱ID”（0..boxCount-1）
+let ballBoxId = 0;
 
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
+// --------- 爆発エフェクト（CSSがあれば派手、なくても動作に影響なし） ----------
 function explodeAtClientXY(x, y){
-  // 画面揺れ（任意）
   document.body.classList.add("screen-shake");
   setTimeout(() => document.body.classList.remove("screen-shake"), 240);
 
-  const N = 18; // 粒の数（増やすほど派手）
+  const N = 18;
   for (let i = 0; i < N; i++){
     const p = document.createElement("div");
     p.className = "particle";
 
-    // 出発点
     p.style.left = x + "px";
     p.style.top  = y + "px";
 
-    // 飛び散り方向
     const angle = (Math.PI * 2) * (i / N) + (Math.random() * 0.4);
     const dist  = 40 + Math.random() * 50;
     const dx = Math.cos(angle) * dist;
@@ -52,17 +65,21 @@ function explodeAtClientXY(x, y){
     p.style.setProperty("--dx", `${dx}px`);
     p.style.setProperty("--dy", `${dy}px`);
 
-    // 色（ランダムにそれっぽい爆発色）
-    const hue = 20 + Math.random() * 50; // オレンジ〜黄色
+    const hue = 20 + Math.random() * 50;
     p.style.background = `hsl(${hue}, 90%, 60%)`;
 
     document.body.appendChild(p);
     p.addEventListener("animationend", () => p.remove());
+    // CSSが無くても、念のため消す
+    setTimeout(() => p.remove(), 700);
   }
 }
 
+// --------- UI補助 ----------
 function setTransition(ms){
-  for (const el of boxes) el.style.transitionDuration = `${ms}ms`;
+  for (const el of boxes){
+    el.style.transitionDuration = `${ms}ms`;
+  }
 }
 
 function clearMarks(){
@@ -72,6 +89,7 @@ function clearMarks(){
 }
 
 function showBall(isVisible){
+  if (!ballEl) return;
   ballEl.classList.toggle("hidden", !isVisible);
 }
 
@@ -81,6 +99,7 @@ function setClickable(on){
   }
 }
 
+// --------- レイアウト（3列グリッド：9箱は3×3、3箱は1行3列） ----------
 function calcLayout(){
   const rect = lane.getBoundingClientRect();
 
@@ -109,28 +128,29 @@ function calcLayout(){
   const vgap = Math.max(10, Math.min(18, Math.floor(boxH * 0.18)));
   const ys = [];
   for (let r = 0; r < rows; r++){
-    ys.push(30 + r * (boxH + vgap)); // 上余白30
+    ys.push(30 + r * (boxH + vgap));
   }
 
   return { xs, ys, boxW, boxH, cols };
 }
 
 function applyPositions(){
+  if (boxes.length !== boxCount) return;
   const { xs, ys, boxW, boxH, cols } = calcLayout();
 
   for (let id = 0; id < boxCount; id++){
-    const slot = slotOfBoxId[id];      // 0..8
-    const r = Math.floor(slot / cols); // 行
-    const c = slot % cols;             // 列
+    const slot = slotOfBoxId[id];
+    const r = Math.floor(slot / cols);
+    const c = slot % cols;
 
     boxes[id].style.width  = `${boxW}px`;
     boxes[id].style.height = `${boxH}px`;
     boxes[id].style.left   = `${xs[c]}px`;
-    boxes[id].style.top    = `${ys[r]}px`;   // ★これが3×3の本体
+    boxes[id].style.top    = `${ys[r]}px`;
   }
 
-  // ボールはballBoxIdの箱に入れる
-  if (ballBoxId >= 0 && ballBoxId < boxCount){
+  // ボールは入ってる箱の中に常に入れる（ズレ根絶）
+  if (ballEl && ballBoxId >= 0 && ballBoxId < boxCount){
     boxes[ballBoxId].appendChild(ballEl);
     ballEl.style.left = "50%";
     ballEl.style.bottom = "18px";
@@ -138,15 +158,12 @@ function applyPositions(){
   }
 }
 
-function pickRandomBallSlot(){
-  ballSlot = Math.floor(Math.random() * boxcount);
-}
-
+// --------- シャッフル ----------
 function randomSwapPair(){
   const a = Math.floor(Math.random() * boxCount);
   let b = Math.floor(Math.random() * boxCount);
   while (b === a) b = Math.floor(Math.random() * boxCount);
-  return [a,b];
+  return [a, b];
 }
 
 function swapSlots(sa, sb){
@@ -161,9 +178,10 @@ function swapSlots(sa, sb){
   slotOfBoxId[boxA] = sb;
   slotOfBoxId[boxB] = sa;
 
-  // ballBoxIdは動かさない（箱が動くので追従する）
+  // ballBoxIdは動かさない：箱と一緒に移動する（appendChildで追従）
 }
 
+// --------- 描画 ----------
 function render(){
   lane.innerHTML = "";
   boxes = [];
@@ -182,34 +200,33 @@ function render(){
   ballEl.className = "ball";
   lane.appendChild(ballEl);
 
-  setClickable(false);
   clearMarks();
+  setClickable(false);
   showBall(true);
+
+  setTransition(SHUFFLE_SPEED);
   applyPositions();
 }
 
+// --------- ゲーム進行 ----------
+function setRoundBoxes(){
+  boxCount = (round >= 2) ? 9 : 3;
+  slotOfBoxId = Array.from({ length: boxCount }, (_, i) => i);
+  ballBoxId = Math.floor(Math.random() * boxCount);
+}
+
 async function startRound(){
-  
-  // Round1:3箱、Round2以降:9箱
-boxCount = (round >= 2) ? 9 : 3;
+  setRoundBoxes();
+  render();
 
-// 箱数が変わるのでスロット初期化して作り直す
-slotOfBoxId = Array.from({length: boxCount}, (_, i) => i);
-ballBoxId = Math.floor(Math.random() * boxCount);
-
-render();
-  
   phase = "show";
   nextBtn.disabled = true;
   startBtn.disabled = true;
   clearMarks();
 
-  slotOfBoxId = Array.from({ length: boxCount }, (_, i) => i);
-  pickRandomBallSlot();
-  setTransition(700);
+  setTransition(SHUFFLE_SPEED);
   showBall(true);
   setClickable(false);
-
   applyPositions();
 
   msg.textContent = "見て。ボールの位置を覚えろ。";
@@ -221,54 +238,47 @@ render();
   await sleep(450);
 
   phase = "shuffle";
-  const moves = 5; // ←固定
-  
-  for (let i = 0; i < moves; i++){
-    const speed = 700; // ←固定
+  msg.textContent = ""; // シャッフル中は表示なし
 
+  for (let i = 0; i < SHUFFLE_MOVES; i++){
     if (Math.random() < FEINT_CHANCE){
-      await sleep(Math.floor(speed * FEINT_PAUSE_RATIO));
-    } else {
-          }
+      await sleep(Math.floor(SHUFFLE_SPEED * FEINT_PAUSE_RATIO));
+    }
 
     const [sa, sb] = randomSwapPair();
     swapSlots(sa, sb);
     applyPositions();
-    await sleep(speed + 60);
+    await sleep(SHUFFLE_SPEED + 60);
 
     if (Math.random() < FEINT_CHANCE * 0.6){
-      await sleep(Math.floor(speed * 0.18));
+      await sleep(Math.floor(SHUFFLE_SPEED * 0.18));
       const [sa2, sb2] = randomSwapPair();
       swapSlots(sa2, sb2);
       applyPositions();
-      await sleep(speed * 0.65);
+      await sleep(SHUFFLE_SPEED * 0.65);
     }
   }
 
   phase = "guess";
-  msg.textContent = "どれに入ってるかわかると思うけど、箱をタップして。";
+  msg.textContent = "箱をタップして。";
   setClickable(true);
 }
 
 function onPick(boxId){
-  // ★スタート前（idle）で押したら爆発
+  // スタート前に押したら爆発
   if (phase === "idle"){
     const rect = boxes[boxId].getBoundingClientRect();
-    explodeAtClientXY(rect.left + rect.width/2, rect.top + rect.height/2);
+    explodeAtClientXY(rect.left + rect.width / 2, rect.top + rect.height / 2);
     msg.textContent = "START押せ";
     return;
   }
 
   if (phase !== "guess") return;
 
-  // ↓ここから下は今のまま
-
-  if (phase !== "guess") return;
-
   phase = "result";
   setClickable(false);
 
-const correct = boxId === ballBoxId;
+  const correct = (boxId === ballBoxId);
 
   showBall(true);
   applyPositions();
@@ -277,16 +287,16 @@ const correct = boxId === ballBoxId;
   if (correct){
     boxes[boxId].classList.add("correct");
     win++;
-    round++;
     msg.textContent = "当たり！";
   } else {
     boxes[boxId].classList.add("wrong");
     boxes[ballBoxId].classList.add("correct");
     lose++;
-round++;
     msg.textContent = "ハズレ。論外。";
   }
 
+  // 次ラウンドへ
+  round++;
   levelEl.textContent = String(round);
   winEl.textContent = String(win);
   loseEl.textContent = String(lose);
@@ -296,7 +306,10 @@ round++;
 }
 
 function resetAll(){
-  round = 1; win = 0; lose = 0;
+  round = 1;
+  win = 0;
+  lose = 0;
+
   levelEl.textContent = "1";
   winEl.textContent = "0";
   loseEl.textContent = "0";
@@ -305,20 +318,22 @@ function resetAll(){
   startBtn.disabled = false;
   nextBtn.disabled = true;
 
+  boxCount = 3;
   slotOfBoxId = Array.from({ length: boxCount }, (_, i) => i);
-  ballSlot = 0;
+  ballBoxId = Math.floor(Math.random() * boxCount);
 
-  setTransition(700);
+  render();
+  setTransition(SHUFFLE_SPEED);
+
   setClickable(false);
   clearMarks();
   showBall(true);
   applyPositions();
 
-  msg.textContent = "STARTを押す。最初はボールが見える。";
+  msg.textContent = "STARTを押して";
 }
 
-startBtn.addEventListener("click", startRound);
-nextBtn.addEventListener("click", startRound);
+// --------- RESETモーダル（重複登録しない） ----------
 function openResetModal(){
   modalBackdrop.classList.remove("hidden");
 }
@@ -328,59 +343,27 @@ function closeResetModal(){
 
 resetBtn.addEventListener("click", openResetModal);
 
-if (modalBackdrop && modalOk && modalCancel){
-  resetBtn.addEventListener("click", () => {
-    modalBackdrop.classList.remove("hidden");
-  });
-
-  modalCancel.addEventListener("click", () => {
-    modalBackdrop.classList.add("hidden");
-  });
-
-  modalOk.addEventListener("click", () => {
-    modalBackdrop.classList.add("hidden");
-    resetAll();
-  });
-}
+modalCancel.addEventListener("click", closeResetModal);
 
 modalOk.addEventListener("click", () => {
   closeResetModal();
   resetAll();
 });
 
-// 背景クリックで閉じる（任意）
 modalBackdrop.addEventListener("click", (e) => {
   if (e.target === modalBackdrop) closeResetModal();
 });
 
-window.addEventListener("resize", () => {
-  applyPositions();
-});
+// --------- その他 ----------
+window.addEventListener("resize", () => applyPositions());
 
-
-// ゲームエリアではコンテキストメニュー（長押し）を無効化
+// ゲームエリアで選択・長押しメニューを抑止（完全に防げないが体験は改善）
 lane.addEventListener("contextmenu", (e) => e.preventDefault());
 lane.addEventListener("selectstart", (e) => e.preventDefault());
 
-render();
+// ボタン
+startBtn.addEventListener("click", startRound);
+nextBtn.addEventListener("click", startRound);
+
+// 初期化
 resetAll();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
