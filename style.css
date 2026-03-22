@@ -79,38 +79,44 @@ body{
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(90vw, 720px);
+  width: min(86vw, 560px);
   margin: 0;
-  padding: 20px 28px;
-  border-radius: 20px;
-  background: rgba(11, 16, 32, 0.9);
+  padding: 14px 20px;
+  border-radius: 16px;
+  background: rgba(11, 16, 32, 0.82);
   border: 1px solid rgba(255,255,255,0.16);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
   color: #e9ecff;
-  font-size: clamp(22px, 4vw, 42px);
+  font-size: clamp(18px, 3.4vw, 30px);
   font-weight: 900;
   line-height: 1.4;
   text-align: center;
   z-index: 10001;
   pointer-events: none;
+  opacity: 0;
 }
 
 .msg.hidden{
   display: none;
 }
 
+.msg.visible{
+  display: block;
+  animation: messageFlash 0.85s ease forwards;
+}
+
 .stage{
   border-radius:18px;
-  /* overflow:hidden; */
   border:1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.04);
+  padding: 10px;
 }
 
 /* ここが重要：laneは相対、箱は絶対配置 */
 .lane{
   position: relative;
-  height: 520px;
-  padding: 18px;
+  height: 430px;
+  padding: 8px;
 }
 
 /* 箱はJSが left/width/height を入れる */
@@ -174,7 +180,8 @@ body{
 
 /* スマホ縦はlaneを少し高く */
 @media (max-width: 600px){
-  .lane{ height: 600px; }
+  .stage{ padding: 8px; }
+  .lane{ height: 500px; padding: 6px; }
 }
 
 /* 箱の中に「変形する皮」を追加して、丸⇄四角を派手にやる */
@@ -416,6 +423,25 @@ body.round99 #level{
   to{
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes messageFlash{
+  0%{
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.96);
+  }
+  15%{
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  70%{
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100%{
+    opacity: 0;
+    transform: translate(-50%, -54%) scale(1.02);
   }
 }
 

@@ -67,14 +67,33 @@ let boxes = [];
 let ballEl = null;
 let slotOfBoxId = [];
 let ballBoxId = 0;
+let messageTimer = 0;
 
 function sleep(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function setMessage(text){
+function setMessage(text, duration = 850){
+  clearTimeout(messageTimer);
+
+  if (!text){
+    msg.textContent = "";
+    msg.classList.remove("visible");
+    msg.classList.add("hidden");
+    return;
+  }
+
   msg.textContent = text;
-  msg.classList.toggle("hidden", !text);
+  msg.classList.remove("hidden", "visible");
+  void msg.offsetWidth;
+  msg.classList.add("visible");
+
+  if (duration > 0){
+    messageTimer = setTimeout(() => {
+      msg.classList.remove("visible");
+      msg.classList.add("hidden");
+    }, duration);
+  }
 }
 
 function updateRoundLabel(){
@@ -130,30 +149,44 @@ function setClickable(on){
 function calcLayout(){
   const rect = lane.getBoundingClientRect();
 
-  let pad = 18;
-  if (rect.width < 360) pad = 12;
-  if (rect.width < 320) pad = 8;
+  let padX = 16;
+  let padY = 18;
+  if (rect.width < 360){
+    padX = 12;
+    padY = 14;
+  }
+  if (rect.width < 320){
+    padX = 8;
+    padY = 12;
+  }
 
   const cols = boxCount <= 2 ? 2 : 3;
   const rows = Math.ceil(boxCount / cols);
-  const availableW = rect.width - pad * 2;
+  const availableW = rect.width - padX * 2;
+  const availableH = rect.height - padY * 2;
 
   let gap = Math.floor(availableW * 0.03);
-  gap = Math.max(6, Math.min(14, gap));
+  gap = Math.max(6, Math.min(12, gap));
 
-  let boxW = Math.floor((availableW - gap * (cols - 1)) / cols);
-  boxW = Math.max(44, Math.min(160, boxW));
+  const vgap = Math.max(8, Math.min(14, Math.floor(availableH * 0.035)));
+  const maxBoxW = Math.floor((availableW - gap * (cols - 1)) / cols);
+  const maxBoxH = Math.floor((availableH - vgap * (rows - 1)) / rows);
 
+  let boxW = Math.min(maxBoxW, Math.floor(maxBoxH / 1.05));
+  boxW = Math.max(44, Math.min(150, boxW));
   const boxH = Math.round(boxW * 1.05);
   const xs = [];
+  const totalW = boxW * cols + gap * (cols - 1);
+  const startX = Math.max(padX, Math.floor((rect.width - totalW) / 2));
   for (let c = 0; c < cols; c++){
-    xs.push(pad + c * (boxW + gap));
+    xs.push(startX + c * (boxW + gap));
   }
 
-  const vgap = Math.max(10, Math.min(18, Math.floor(boxH * 0.18)));
+  const totalH = boxH * rows + vgap * (rows - 1);
+  const startY = Math.max(padY, Math.floor((rect.height - totalH) / 2));
   const ys = [];
   for (let r = 0; r < rows; r++){
-    ys.push(30 + r * (boxH + vgap));
+    ys.push(startY + r * (boxH + vgap));
   }
 
   return { xs, ys, boxW, boxH, cols };
@@ -259,11 +292,11 @@ async function startRound(){
   setClickable(false);
   applyPositions();
 
-  setMessage("見て、ボールの場所を覚えてね");
+  setMessage("見て、ボールの場所を覚えてね", 800);
   await sleep(900);
 
   phase = "hide";
-  setMessage("隠すよ");
+  setMessage("隠すよ", 500);
   showBall(false);
   await sleep(450);
 
@@ -290,7 +323,7 @@ async function startRound(){
   }
 
   phase = "guess";
-  setMessage("玉をタップして");
+  setMessage("玉をタップして", 650);
   setClickable(true);
 }
 
@@ -298,7 +331,7 @@ function onPick(boxId){
   if (phase === "idle"){
     const rect = boxes[boxId].getBoundingClientRect();
     explodeAtClientXY(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    setMessage("STARTを押して");
+    setMessage("STARTを押して", 700);
     return;
   }
 
@@ -319,7 +352,7 @@ function onPick(boxId){
     if (round === 100){
       endTime = Date.now();
       const seconds = Math.floor((endTime - startTime) / 1000);
-      setMessage(`${seconds}秒でクリアしました。ゲームクリア！`);
+      setMessage(`${seconds}秒でクリアしました。ゲームクリア！`, 2400);
 
       phase = "idle";
       setClickable(false);
@@ -331,12 +364,12 @@ function onPick(boxId){
 
     round++;
     if (round === 6) round = 99;
-    setMessage(round === 99 ? "センスあるから本番開始" : "勝った！");
+    setMessage(round === 99 ? "センスあるから本番開始" : "勝った！", 900);
   } else {
     boxes[boxId].classList.add("wrong");
     boxes[ballBoxId].classList.add("correct");
     lose++;
-    setMessage("ハズレ。残念！");
+    setMessage("ハズレ。残念！", 900);
   }
 
   updateRoundLabel();
@@ -373,7 +406,7 @@ function resetAll(){
   applyPositions();
 
   document.body.classList.remove("round99");
-  setMessage("STARTを押して");
+  setMessage("STARTを押して", 900);
 }
 
 function openResetModal(){
