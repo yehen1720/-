@@ -292,11 +292,11 @@ async function startRound(){
   setClickable(false);
   applyPositions();
 
-  setMessage("見て、ボールの場所を覚えてね", 800);
+  setMessage("見て。ボールの位置を覚えろ。", 800);
   await sleep(900);
 
   phase = "hide";
-  setMessage("隠すよ", 500);
+  setMessage("隠すよ。", 500);
   showBall(false);
   await sleep(450);
 
@@ -323,7 +323,7 @@ async function startRound(){
   }
 
   phase = "guess";
-  setMessage("玉をタップして", 650);
+  setMessage("箱をタップして。", 650);
   setClickable(true);
 }
 
@@ -331,7 +331,7 @@ function onPick(boxId){
   if (phase === "idle"){
     const rect = boxes[boxId].getBoundingClientRect();
     explodeAtClientXY(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    setMessage("STARTを押して", 700);
+    setMessage("START押せ", 700);
     return;
   }
 
@@ -352,7 +352,7 @@ function onPick(boxId){
     if (round === 100){
       endTime = Date.now();
       const seconds = Math.floor((endTime - startTime) / 1000);
-      setMessage(`${seconds}秒でクリアしました。ゲームクリア！`, 2400);
+      setMessage(`${seconds}秒無駄にしました。ゲームクリア。`, 0);
 
       phase = "idle";
       setClickable(false);
@@ -364,12 +364,12 @@ function onPick(boxId){
 
     round++;
     if (round === 6) round = 99;
-    setMessage(round === 99 ? "センスあるから本番開始" : "勝った！", 900);
+    setMessage(round === 99 ? "センスあるから本番開始" : "当たり！", 900);
   } else {
     boxes[boxId].classList.add("wrong");
     boxes[ballBoxId].classList.add("correct");
     lose++;
-    setMessage("ハズレ。残念！", 900);
+    setMessage("普通にハズレ", 900);
   }
 
   updateRoundLabel();
