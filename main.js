@@ -482,7 +482,7 @@ function onPick(boxId){
     if (round === 100){
       endTime = Date.now();
       const seconds = Math.floor((endTime - startTime) / 1000);
-      setMessageUntilTap(getClearMessage(round, seconds));
+      setMessageUntilTap(`${getClearMessage(round, seconds)}\n画面をタップで閉じる`);
 
       phase = "final-message";
       setClickable(false);
@@ -492,12 +492,12 @@ function onPick(boxId){
 
     round++;
     if (round === 6) round = 99;
-    setMessage(getClearMessage(round), 900);
+    setMessage(`${getClearMessage(round)}\n画面をタップで次へ`, 0);
   } else {
     boxes[boxId].classList.add("wrong");
     boxes[ballBoxId].classList.add("correct");
     lose++;
-    setMessage("惜しい。もう一回。", 900);
+    setMessage("惜しい。もう一回。\n画面をタップで続ける", 0);
   }
 
   phase = "ready-next";
@@ -531,7 +531,7 @@ function resetAll(){
   applyPositions();
 
   document.body.classList.remove("round99");
-  setMessage("STARTを押して", 900);
+  setMessage("画面をタップしてスタート", 0);
 }
 
 function openResetModal(){
