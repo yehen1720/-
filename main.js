@@ -423,7 +423,7 @@ async function startRound(){
   setClickable(false);
   applyPositions();
 
-  setMessage("見て。ボールの位置を覚えろ。", 800);
+  setMessage("見て。ボールの位置を覚えてみて。", 800);
   await sleep(900);
 
   phase = "hide";
