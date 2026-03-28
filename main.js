@@ -123,6 +123,48 @@ function explodeAtClientXY(x, y){
   }
 }
 
+function celebrateAtBox(box){
+  const rect = box.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+
+  document.body.classList.add("success-flash");
+  setTimeout(() => document.body.classList.remove("success-flash"), 420);
+
+  box.classList.remove("success-pop");
+  void box.offsetWidth;
+  box.classList.add("success-pop");
+  setTimeout(() => box.classList.remove("success-pop"), 520);
+
+  const ring = document.createElement("div");
+  ring.className = "success-ring";
+  ring.style.left = `${x}px`;
+  ring.style.top = `${y}px`;
+  document.body.appendChild(ring);
+  ring.addEventListener("animationend", () => ring.remove());
+  setTimeout(() => ring.remove(), 700);
+
+  const burstCount = 26;
+  for (let i = 0; i < burstCount; i++){
+    const piece = document.createElement("div");
+    piece.className = "success-spark";
+    piece.style.left = `${x}px`;
+    piece.style.top = `${y}px`;
+
+    const angle = Math.PI * 2 * (i / burstCount) + Math.random() * 0.28;
+    const dist = 70 + Math.random() * 75;
+    const rise = 18 + Math.random() * 28;
+    piece.style.setProperty("--dx", `${Math.cos(angle) * dist}px`);
+    piece.style.setProperty("--dy", `${Math.sin(angle) * dist - rise}px`);
+    piece.style.background = `hsl(${40 + Math.random() * 110}, 96%, ${58 + Math.random() * 10}%)`;
+    piece.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
+
+    document.body.appendChild(piece);
+    piece.addEventListener("animationend", () => piece.remove());
+    setTimeout(() => piece.remove(), 900);
+  }
+}
+
 function setTransition(ms){
   for (const el of boxes){
     el.style.transitionDuration = `${ms}ms`;
@@ -347,6 +389,7 @@ function onPick(boxId){
 
   if (correct){
     boxes[boxId].classList.add("correct");
+    celebrateAtBox(boxes[boxId]);
     win++;
 
     if (round === 100){
