@@ -68,9 +68,59 @@ let ballEl = null;
 let slotOfBoxId = [];
 let ballBoxId = 0;
 let messageTimer = 0;
+let audioCtx = null;
 
 function sleep(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getAudioContext(){
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioCtx){
+    audioCtx = new AudioContextClass();
+  }
+  if (audioCtx.state === "suspended"){
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+function playCorrectSound(){
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0.0001, now);
+  master.gain.exponentialRampToValueAtTime(0.22, now + 0.02);
+  master.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+  master.connect(ctx.destination);
+
+  const oscA = ctx.createOscillator();
+  const oscB = ctx.createOscillator();
+  const tone = ctx.createGain();
+
+  oscA.type = "triangle";
+  oscB.type = "sine";
+  oscA.frequency.setValueAtTime(740, now);
+  oscA.frequency.exponentialRampToValueAtTime(1110, now + 0.16);
+  oscB.frequency.setValueAtTime(1480, now);
+  oscB.frequency.exponentialRampToValueAtTime(1760, now + 0.12);
+
+  tone.gain.setValueAtTime(0.0001, now);
+  tone.gain.exponentialRampToValueAtTime(0.55, now + 0.018);
+  tone.gain.exponentialRampToValueAtTime(0.18, now + 0.14);
+  tone.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+
+  oscA.connect(tone);
+  oscB.connect(tone);
+  tone.connect(master);
+
+  oscA.start(now);
+  oscB.start(now + 0.02);
+  oscA.stop(now + 0.42);
+  oscB.stop(now + 0.24);
 }
 
 function setMessage(text, duration = 850){
@@ -389,6 +439,7 @@ function onPick(boxId){
 
   if (correct){
     boxes[boxId].classList.add("correct");
+    playCorrectSound();
     celebrateAtBox(boxes[boxId]);
     win++;
 
