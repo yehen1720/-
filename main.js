@@ -1,7 +1,5 @@
 ﻿const lane = document.getElementById("lane");
 const msg = document.getElementById("msg");
-const startBtn = document.getElementById("start");
-const nextBtn = document.getElementById("next");
 const resetBtn = document.getElementById("reset");
 
 const modalBackdrop = document.getElementById("modalBackdrop");
@@ -399,6 +397,10 @@ function setRoundBoxes(){
 }
 
 async function startRound(){
+  if (phase !== "idle" && phase !== "ready-next"){
+    return;
+  }
+
   if (round === 1 && startTime === 0){
     introScreen.classList.remove("hidden");
     await sleep(1800);
@@ -414,8 +416,6 @@ async function startRound(){
   document.body.classList.toggle("round99", round === 99);
 
   phase = "show";
-  nextBtn.disabled = true;
-  startBtn.disabled = true;
   clearMarks();
 
   setTransition(difficulty.speed);
@@ -463,13 +463,6 @@ function onPick(boxId){
     return;
   }
 
-  if (phase === "idle"){
-    const rect = boxes[boxId].getBoundingClientRect();
-    explodeAtClientXY(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    setMessage("STARTを押してね", 700);
-    return;
-  }
-
   if (phase !== "guess") return;
 
   phase = "result";
@@ -493,8 +486,6 @@ function onPick(boxId){
 
       phase = "final-message";
       setClickable(false);
-      nextBtn.disabled = true;
-      startBtn.disabled = true;
       document.body.classList.remove("round99");
       return;
     }
@@ -509,11 +500,10 @@ function onPick(boxId){
     setMessage("惜しい。もう一回。", 900);
   }
 
+  phase = "ready-next";
   updateRoundLabel();
   winEl.textContent = String(win);
   loseEl.textContent = String(lose);
-  nextBtn.disabled = false;
-  startBtn.disabled = true;
 }
 
 function resetAll(){
@@ -528,8 +518,6 @@ function resetAll(){
   loseEl.textContent = "0";
 
   phase = "idle";
-  startBtn.disabled = false;
-  nextBtn.disabled = true;
 
   boxCount = 3;
   slotOfBoxId = Array.from({ length: boxCount }, (_, i) => i);
@@ -554,6 +542,15 @@ function closeResetModal(){
   modalBackdrop.classList.add("hidden");
 }
 
+function handleScreenTap(e){
+  if (modalBackdrop && !modalBackdrop.classList.contains("hidden")) return;
+  if (e.target === resetBtn || resetBtn.contains(e.target)) return;
+
+  if (phase === "idle" || phase === "ready-next"){
+    startRound();
+  }
+}
+
 resetBtn.addEventListener("click", openResetModal);
 modalCancel.addEventListener("click", closeResetModal);
 modalOk.addEventListener("click", () => {
@@ -567,7 +564,6 @@ modalBackdrop.addEventListener("click", (e) => {
 window.addEventListener("resize", () => applyPositions());
 lane.addEventListener("contextmenu", (e) => e.preventDefault());
 lane.addEventListener("selectstart", (e) => e.preventDefault());
-startBtn.addEventListener("click", startRound);
-nextBtn.addEventListener("click", startRound);
+document.addEventListener("pointerdown", handleScreenTap);
 
 resetAll();

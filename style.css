@@ -97,6 +97,7 @@ body::after{
 }
 
 .top{
+  position: relative;
   margin-bottom: 14px;
 }
 
@@ -209,11 +210,20 @@ body::after{
 }
 
 .btn.danger{
+  position: absolute;
+  top: 0;
+  right: 0;
   min-width: auto;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
   background:
     linear-gradient(180deg, rgba(255, 116, 116, 0.3), rgba(255, 116, 116, 0.12)),
     linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
   border-color: rgba(255, 121, 121, 0.42);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  opacity: 0.45;
 }
 
 .btn.danger:hover:not(:disabled){
@@ -224,6 +234,7 @@ body::after{
     inset 0 1px 0 rgba(255,255,255,0.12),
     0 12px 22px rgba(4, 15, 29, 0.32),
     0 0 20px rgba(255, 118, 118, 0.14);
+  opacity: 0.72;
 }
 
 .msg{
@@ -559,7 +570,9 @@ body,
   }
 
   .btn.danger{
-    flex-basis: 100%;
+    top: 2px;
+    right: 0;
+    flex-basis: auto;
   }
 
   .stage{
