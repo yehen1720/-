@@ -304,6 +304,7 @@ body::after{
   overflow: visible;
   cursor: pointer;
   transition: left 520ms ease;
+  isolation: isolate;
 }
 
 .box::before{
@@ -325,7 +326,11 @@ body::after{
   inset: 0;
   z-index: 1;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,255,255,0.18), rgba(255,255,255,0) 52%),
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+  mix-blend-mode: screen;
+  opacity: 0.72;
 }
 
 .box .lid,
