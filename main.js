@@ -287,6 +287,8 @@ function calcLayout(){
 function applyPositions(){
   if (boxes.length !== boxCount) return;
   const { xs, ys, boxW, boxH, cols } = calcLayout();
+  const ballSize = Math.round(Math.max(28, Math.min(64, boxW * 0.48)));
+  const ballBottom = Math.round(Math.max(12, Math.min(24, boxH * 0.18)));
 
   for (let id = 0; id < boxCount; id++){
     const slot = slotOfBoxId[id];
@@ -301,8 +303,10 @@ function applyPositions(){
 
   if (ballEl && ballBoxId >= 0 && ballBoxId < boxCount){
     boxes[ballBoxId].appendChild(ballEl);
+    ballEl.style.width = `${ballSize}px`;
+    ballEl.style.height = `${ballSize}px`;
     ballEl.style.left = "50%";
-    ballEl.style.bottom = "18px";
+    ballEl.style.bottom = `${ballBottom}px`;
     ballEl.style.transform = "translateX(-50%)";
   }
 }
