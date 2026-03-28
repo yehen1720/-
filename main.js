@@ -467,7 +467,7 @@ function onPick(boxId){
   if (phase === "idle"){
     const rect = boxes[boxId].getBoundingClientRect();
     explodeAtClientXY(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    setMessage("START押せ", 700);
+    setMessage("STARTを押してね", 700);
     return;
   }
 
@@ -507,7 +507,7 @@ function onPick(boxId){
     boxes[boxId].classList.add("wrong");
     boxes[ballBoxId].classList.add("correct");
     lose++;
-    setMessage("普通にハズレ", 900);
+    setMessage("惜しい。もう一回。", 900);
   }
 
   updateRoundLabel();

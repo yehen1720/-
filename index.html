@@ -1,32 +1,32 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ウエノゲーム</title>
+  <title>シェルゲーム</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="card">
     <header class="top">
-      <h1>ウエノゲームX</h1>
+      <p class="eyebrow">Focus Game</p>
+      <h1>シェルゲーム</h1>
+      <p class="lead">ボールの位置を見失わずに、最後まで追い切ろう。</p>
 
       <div class="hud">
-<div class="pill">ROUND: <span id="level">1</span></div>
-        <div class="pill">WIN: <span id="win">0</span></div>
-        <div class="pill">LOSE: <span id="lose">0</span></div>
+        <div class="pill">ROUND <span id="level">1</span></div>
+        <div class="pill">WIN <span id="win">0</span></div>
+        <div class="pill">LOSE <span id="lose">0</span></div>
       </div>
-      
-<div class="btns">
-  <button id="start" class="btn">START</button>
-  <button id="next" class="btn" disabled>NEXT</button>
 
-  <div class="spacer"></div>
+      <div class="btns">
+        <button id="start" class="btn">START</button>
+        <button id="next" class="btn" disabled>NEXT</button>
+        <div class="spacer"></div>
+        <button id="reset" class="btn danger">RESET</button>
+      </div>
 
-  <button id="reset" class="btn danger">RESET</button>
-</div>
-
-      <p id="msg" class="msg">STARTを押して</p>
+      <p id="msg" class="msg">STARTを押してね</p>
     </header>
 
     <section class="stage">
@@ -34,36 +34,23 @@
     </section>
 
     <div id="modalBackdrop" class="backdrop hidden">
-  <div class="modal">
-    <p class="modalText">何でリセット？</p>
-    <div class="modalBtns">
-      <button id="modalCancel" class="btn">やめる</button>
-      <button id="modalOk" class="btn danger">リセット</button>
+      <div class="modal">
+        <p class="modalText">最初からやり直しますか？</p>
+        <div class="modalBtns">
+          <button id="modalCancel" class="btn">戻る</button>
+          <button id="modalOk" class="btn danger">リセット</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<p class="credit">Supported by 荻原</p>
- 
     <div id="introScreen" class="intro hidden">
-  <div class="introText">
-    7勝でクリア！<br>
-    クリアしたら秘密のメッセージが出るよ
-  </div>
-</div>
-
+      <div class="introText">
+        7勝でクリア。<br />
+        最後まで追えたら、ちゃんと褒めます。
+      </div>
+    </div>
   </main>
 
   <script src="main.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
