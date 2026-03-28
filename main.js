@@ -15,6 +15,16 @@ const introScreen = document.getElementById("introScreen");
 
 const FEINT_PAUSE_RATIO = 0.45;
 const BASE_SPEED = 700;
+const CLEAR_MESSAGES = {
+  1: "当たり！",
+  2: "これはすごい",
+  3: "かなりすごい",
+  4: "まあすごい",
+  5: "やっぱりすごい",
+  99: "そこまですごくない",
+  100: ({ seconds }) => `${seconds}秒無駄にしました。ゲームクリア。`,
+  default: "当たり！",
+};
 
 function getDifficulty(r){
   if (r === 100){
@@ -50,9 +60,9 @@ function getDifficulty(r){
   return {
     boxCount: 9,
     moves: 30,
-    speed: 350,
+    speed: 700,
     feintChance: 0.35,
-    gap: 10,
+    gap: 20,
   };
 }
 
@@ -69,6 +79,7 @@ let slotOfBoxId = [];
 let ballBoxId = 0;
 let messageTimer = 0;
 let audioCtx = null;
+let dismissMessageHandler = null;
 
 function sleep(ms){
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -125,6 +136,10 @@ function playCorrectSound(){
 
 function setMessage(text, duration = 850){
   clearTimeout(messageTimer);
+  if (dismissMessageHandler){
+    document.removeEventListener("pointerdown", dismissMessageHandler, true);
+    dismissMessageHandler = null;
+  }
 
   if (!text){
     msg.textContent = "";
@@ -146,8 +161,29 @@ function setMessage(text, duration = 850){
   }
 }
 
+function setMessageUntilTap(text){
+  setMessage(text, 0);
+
+  dismissMessageHandler = (e) => {
+    if (e.target === resetBtn || modalBackdrop.contains(e.target)) return;
+    phase = "idle";
+    setMessage("");
+  };
+
+  setTimeout(() => {
+    if (dismissMessageHandler){
+      document.addEventListener("pointerdown", dismissMessageHandler, true);
+    }
+  }, 0);
+}
+
 function updateRoundLabel(){
   levelEl.textContent = (round === 100) ? "FINAL ROUND" : String(round);
+}
+
+function getClearMessage(clearedRound, seconds = 0){
+  const entry = CLEAR_MESSAGES[clearedRound] ?? CLEAR_MESSAGES.default;
+  return (typeof entry === "function") ? entry({ seconds, round: clearedRound }) : entry;
 }
 
 function explodeAtClientXY(x, y){
@@ -424,6 +460,10 @@ async function startRound(){
 }
 
 function onPick(boxId){
+  if (phase === "final-message"){
+    return;
+  }
+
   if (phase === "idle"){
     const rect = boxes[boxId].getBoundingClientRect();
     explodeAtClientXY(rect.left + rect.width / 2, rect.top + rect.height / 2);
@@ -450,9 +490,9 @@ function onPick(boxId){
     if (round === 100){
       endTime = Date.now();
       const seconds = Math.floor((endTime - startTime) / 1000);
-      setMessage(`${seconds}秒無駄にしました。ゲームクリア。`, 0);
+      setMessageUntilTap(getClearMessage(round, seconds));
 
-      phase = "idle";
+      phase = "final-message";
       setClickable(false);
       nextBtn.disabled = true;
       startBtn.disabled = true;
@@ -462,7 +502,7 @@ function onPick(boxId){
 
     round++;
     if (round === 6) round = 99;
-    setMessage(round === 99 ? "センスあるから本番開始" : "当たり！", 900);
+    setMessage(getClearMessage(round), 900);
   } else {
     boxes[boxId].classList.add("wrong");
     boxes[ballBoxId].classList.add("correct");
