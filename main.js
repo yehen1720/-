@@ -374,7 +374,6 @@ function render(){
     const box = document.createElement("div");
     box.className = "box";
     box.dataset.id = String(id);
-    box.innerHTML = '<div class="lid"></div>';
     box.addEventListener("click", () => onPick(id));
     lane.appendChild(box);
     boxes.push(box);
